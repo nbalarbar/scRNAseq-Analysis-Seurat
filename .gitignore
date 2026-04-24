@@ -1,0 +1,23 @@
+library/
+local/
+cellar/
+lock/
+python/
+sandbox/
+staging/
+
+# Ignore Raw Data
+data/
+*.mtx
+*.tsv
+*.gz
+*.h5
+
+# Ignore large R objects (Seurat saves)
+*.rds
+*.RData
+
+# Ignore the actual package files in renv
+renv/
+!renv/settings.json
+!renv/activate.R
