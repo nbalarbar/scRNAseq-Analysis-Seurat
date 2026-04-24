@@ -96,7 +96,7 @@ allGenes <- rownames(pbmc)
 pbmc <- ScaleData(pbmc, features = allGenes)
 
 # ===========================================================================
-# PRINCIPAL COMPONENT ANALYSIS
+# PRINCIPAL COMPONENT ANALYSIS (LINEAR)
 # ===========================================================================
 
 pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
@@ -143,7 +143,24 @@ DimHeatmap(pbmc, dims = 1:6, cells = 500, balanced = TRUE)
 ElbowPlot(pbmc)
 # Plot suggests an elbow arond the first 10 PC's
 
-# ===========================================================================
-# CLUSTERING
-# ===========================================================================
+pbmc <- FindNeighbors(pbmc, dims = 1:10) # KNN
+pbmc <- FindClusters(pbmc, resolution = 0.5)
 
+# Observe cluster ID's
+head(Idents(pbmc), 5) #Idents Function finds clusters
+
+
+# ===========================================================================
+# UMAP CLUSTERING (NON-LINEAR)
+# ===========================================================================
+pbmc <- RunUMAP(pbmc, dims = 1:10)
+DimPlot(pbmc, reduction = "umap")
+
+# ===========================================================================
+# ASSIGNING CELL TYPE IDENTITY
+# ===========================================================================
+new.cluster.ids <- c("Naive CD4 T", "CD14+ Mono", "Memory CD4 T", "B", "CD8 T", "FCGR3A+ Mono",
+    "NK", "DC", "Platelet")
+names(new.cluster.ids) <- levels(pbmc)
+pbmc <- RenameIdents(pbmc, new.cluster.ids)
+DimPlot(pbmc, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
