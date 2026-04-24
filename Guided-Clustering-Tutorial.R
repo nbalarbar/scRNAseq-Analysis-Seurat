@@ -94,3 +94,56 @@ plot1 + plot2
 
 allGenes <- rownames(pbmc)
 pbmc <- ScaleData(pbmc, features = allGenes)
+
+# ===========================================================================
+# PRINCIPAL COMPONENT ANALYSIS
+# ===========================================================================
+
+pbmc <- RunPCA(pbmc, features = VariableFeatures(object = pbmc))
+
+# Seurat provides several useful ways of visualizing both cells and features that define the PCA, including VizDimReduction(), DimPlot(), and DimHeatmap()
+
+# Visualizing PCA in different ways
+
+# Method 1: Shows genes that are both positively and negatively expressed on each end of the PC axis
+print(pbmc[["pca"]], dims = 1:5, nfeatures = 5)
+
+# Output:
+
+# PC_ 1 
+# Positive:  CST3, TYROBP, LST1, AIF1, FTL 
+# Negative:  MALAT1, LTB, IL32, IL7R, CD2 
+# PC_ 2 
+# Positive:  CD79A, MS4A1, TCL1A, HLA-DQA1, HLA-DQB1 
+# Negative:  NKG7, PRF1, CST7, GZMB, GZMA 
+# PC_ 3 
+# Positive:  HLA-DQA1, CD79A, CD79B, HLA-DQB1, HLA-DPB1 
+# Negative:  PPBP, PF4, SDPR, SPARC, GNG11 
+# PC_ 4 
+# Positive:  HLA-DQA1, CD79B, CD79A, MS4A1, HLA-DQB1 
+# Negative:  VIM, IL7R, S100A6, IL32, S100A8 
+# PC_ 5 
+# Positive:  GZMB, NKG7, S100A8, FGFBP2, GNLY 
+# Negative:  LTB, IL7R, CKB, VIM, MS4A7 
+
+
+# Method 2: Presents a "loading score", which genes are contributing the most to a given PC
+VizDimLoadings(pbmc, dims = 1:2, reduction = "pca")
+
+# Method 3: Clusters cells according to the first 2 PC's, each point is a discrete cell
+
+DimPlot(pbmc, reduction = "pca") + NoLegend()
+
+# Method 4: Heatmap
+DimHeatmap(pbmc, dims = 1:6, cells = 500, balanced = TRUE)
+
+# DETERMINE THE DIMENSIONALITY OF THE DATASET
+
+# Elbow plot to determin the number of PC's we'll use
+ElbowPlot(pbmc)
+# Plot suggests an elbow arond the first 10 PC's
+
+# ===========================================================================
+# CLUSTERING
+# ===========================================================================
+
