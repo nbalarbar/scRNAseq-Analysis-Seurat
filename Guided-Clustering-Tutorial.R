@@ -77,3 +77,20 @@ pbmc <- NormalizeData(pbmc)
 
 
 # FEATURE SELECTION
+# Identify highly variable features, by default 2000
+pbmc <- FindVariableFeatures(pbmc, selection.method = "vst", nfeatures = 2000)
+
+# Take top 10 most variable genes
+top10 <- head(VariableFeatures(pbmc), 10)
+
+# plot variable features with and without labels
+plot1 <- VariableFeaturePlot(pbmc)
+plot2 <- LabelPoints(plot = plot1, points = top10, repel = TRUE)
+plot1 + plot2
+
+# SCALE DATA
+# Needed prior to PCA
+# Results are stored in pbmc[["RNA"]]$scale.data
+
+allGenes <- rownames(pbmc)
+pbmc <- ScaleData(pbmc, features = allGenes)
