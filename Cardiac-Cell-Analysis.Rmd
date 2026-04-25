@@ -1,0 +1,63 @@
+---
+title: "Single-Cell Analysis Tutorial"
+author: "Noah Quimpo Balarbar"
+date: "`r Sys.Date()`"
+Dataset: GSE180678
+output: html_document
+---
+```{r}
+library(languageserver)
+library(dplyr)
+library(Seurat)
+library(patchwork)
+```
+# Introduction
+This notebook documents the end-to-end bioinformatics pipeline for analyzing single-cell RNA sequencing (scRNA-seq) data using the Seurat v5 ecosystem. 
+The primary goal is to take raw count data from human heart cells and analyze the transcriptomic response to myocardial infarction at the single-cell level.
+
+## Analysis Objectives
+* Quality Control(QC): Filter out low-quality cells based on gene counts (nFeature_RNA) and mitochonrial contamination (percent.mt)
+* Normalization and Scaling: Correct raw data to ensure gene expression is comparable across all cells
+* Dimensionality Reduction: Utilize Principal Component Analysis (PCA) to simplify the high-dimensionality of gene space, and utilize UMAP for 2D visualization
+* Clustering and Annotation: ID clusters of cells with similar transcriptional profiles and annotate them using established biomarkers
+
+
+# Data Setup
+```{r}
+# Rename files appropriately:
+# barcodes.tsv.gz
+# features.tsv.gz
+# matrix.mtx.gz
+allData <- Read10X(data.dir = "data/GSE180678_RAW")
+cardCells <- CreateSeuratObject(counts = allData, project = "CardCellAnalysis")
+cardCells
+```
+
+# Pre-processing
+## Selecting Viable Cells via Mitochondrial Distress
+```{r}
+# Track Mitochondrial Distress
+cardCells[["percent.mt"]] <- PercentageFeatureSet(cardCells, patter = "^MT-")
+
+# Keep cells with <5% mitochondrial distress
+plot1 <- VlnPlot(cardCells, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", ncol = 3))
+
+# Visualize feature-feature relationships:
+plot2 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot3 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+
+plot2 + plot3
+```
+
+```{r}
+# Visualize feature-feature relationships:
+plot1 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "percent.mt")
+plot2 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+plot1 + plot2
+```
+
+
+
+::: {#refs}
+- Simonson B, Chaffin M, Hill MC, Atwa O, Guedira Y, Bhasin H, Hall AW, Hayat S, Baumgart S, Bedi KC Jr, Margulies KB, Klattenhoff CA, Ellinor PT. Single-nucleus RNA sequencing in ischemic cardiomyopathy reveals common transcriptional profile underlying end-stage heart failure. Cell Rep. 2023 Feb 28;42(2):112086. doi: 10.1016/j.celrep.2023.112086. Epub 2023 Feb 14. PMID: 36790929; PMCID: PMC10423750.
+:::

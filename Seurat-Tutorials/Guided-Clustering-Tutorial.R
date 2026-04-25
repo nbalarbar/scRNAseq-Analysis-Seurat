@@ -1,4 +1,4 @@
-library(languagserver)
+library(languageserver)
 library(dplyr)
 library(Seurat)
 library(patchwork)
