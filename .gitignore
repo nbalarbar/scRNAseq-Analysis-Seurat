@@ -21,3 +21,6 @@ data/
 renv/
 !renv/settings.json
 !renv/activate.R
+
+# Ignore notes I've taken
+*.txt
