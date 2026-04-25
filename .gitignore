@@ -24,3 +24,6 @@ renv/
 
 # Ignore notes I've taken
 *.txt
+
+# Ignore html
+*.html
