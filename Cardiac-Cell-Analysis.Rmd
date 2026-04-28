@@ -5,12 +5,6 @@ date: "`r Sys.Date()`"
 Dataset: GSE180678
 output: html_document
 ---
-```{r}
-library(languageserver)
-library(dplyr)
-library(Seurat)
-library(patchwork)
-```
 # Introduction
 This notebook documents the end-to-end bioinformatics pipeline for analyzing single-cell RNA sequencing (scRNA-seq) data using the Seurat v5 ecosystem. 
 The primary goal is to take raw count data from human heart cells and analyze the transcriptomic response to myocardial infarction at the single-cell level.
@@ -20,10 +14,21 @@ The primary goal is to take raw count data from human heart cells and analyze th
 * Normalization and Scaling: Correct raw data to ensure gene expression is comparable across all cells
 * Dimensionality Reduction: Utilize Principal Component Analysis (PCA) to simplify the high-dimensionality of gene space, and utilize UMAP for 2D visualization
 * Clustering and Annotation: ID clusters of cells with similar transcriptional profiles and annotate them using established biomarkers
+```{r setup, include = FALSE}
+# knitr::opts_chunk$set(fig.width=7, fig.height=5)
+knitr::opts_chunk$set(fig.asp = 0.618) # Golden ratio
+```
 
+
+```{r, message = FALSE, warning = FALSE}
+library(languageserver)
+library(dplyr)
+library(Seurat)
+library(patchwork)
+```
 
 # Data Setup
-```{r}
+```{r, warning = FALSE}
 # Rename files appropriately:
 # barcodes.tsv.gz
 # features.tsv.gz
@@ -35,29 +40,50 @@ cardCells
 
 # Pre-processing
 ## Selecting Viable Cells via Mitochondrial Distress
-```{r}
+```{r, warning = FALSE}
 # Track Mitochondrial Distress
 cardCells[["percent.mt"]] <- PercentageFeatureSet(cardCells, patter = "^MT-")
 
-# Keep cells with <5% mitochondrial distress
-plot1 <- VlnPlot(cardCells, features = c("nFeature_RNA", "nCount_RNA", "percent.mt", ncol = 3))
-
-# Visualize feature-feature relationships:
-plot2 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "percent.mt")
-plot3 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-
-plot2 + plot3
+VlnPlot(cardCells, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
 ```
 
-```{r}
+1) **nFeature_RNA plot:** Number of unique genes found in each cell
+
+2) **nCount_RNA:** Number of RNA molecules detected
+
+3) **percent.mt:** Cells in Mitochondrial distress, healthy cells clustered around 5%
+    
+    - 5% chosen as the mitochondrial threshold
+
+
+```{r, warning = FALSE}
 # Visualize feature-feature relationships:
-plot1 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "percent.mt")
-plot2 <- FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
-plot1 + plot2
+FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "percent.mt")
+FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 ```
 
+1) **nCount_RNA vs percent.mt**: Most cells are clusted with low mitochondrial distress
 
+2) **nCount_RNA vs nFeature_RNA**: More RNA molecules is positively correlated with more genes
+    - Following Current Best Practices in single-cell RNA-seq analysis, 5000 features chosen
+
+
+```{r, warning = FALSE}
+# Subset data to only include cells that meet 5% mitochondrial threshold
+cardCells <- subset(cardCells, subset = nFeature_RNA > 200 & nFeature_RNA <5000 & percent.mt < 5)
+```
+
+## SCTransform
+SCTransform completes all 3: Normalization, Scaling, and Finding Variable Features all in a single command and replaces these steps in the general workflow.
+In addition, SCTransform is also able to remove confounding sources of variation.
+
+```{r, warning = FALSE}
+cardCells <- SCTransform(cardCells, vars.to.regress = "percent.mt", verbose = FALSE)
+```
 
 ::: {#refs}
 - Simonson B, Chaffin M, Hill MC, Atwa O, Guedira Y, Bhasin H, Hall AW, Hayat S, Baumgart S, Bedi KC Jr, Margulies KB, Klattenhoff CA, Ellinor PT. Single-nucleus RNA sequencing in ischemic cardiomyopathy reveals common transcriptional profile underlying end-stage heart failure. Cell Rep. 2023 Feb 28;42(2):112086. doi: 10.1016/j.celrep.2023.112086. Epub 2023 Feb 14. PMID: 36790929; PMCID: PMC10423750.
+
+Current Best Practices in single-cell RNA-seq analysis: a tutorial
+- Luecken MD, Theis FJ. Current best practices in single-cell RNA-seq analysis: a tutorial. Mol Syst Biol. 2019 Jun 19;15(6):e8746. doi: 10.15252/msb.20188746. PMID: 31217225; PMCID: PMC6582955.
 :::

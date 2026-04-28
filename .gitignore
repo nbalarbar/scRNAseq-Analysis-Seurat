@@ -16,6 +16,7 @@ data/
 # Ignore large R objects (Seurat saves)
 *.rds
 *.RData
+.Rprofile
 
 # Ignore the actual package files in renv
 renv/
