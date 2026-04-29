@@ -14,6 +14,7 @@ The primary goal is to take raw count data from human heart cells and analyze th
 * Normalization and Scaling: Correct raw data to ensure gene expression is comparable across all cells
 * Dimensionality Reduction: Utilize Principal Component Analysis (PCA) to simplify the high-dimensionality of gene space, and utilize UMAP for 2D visualization
 * Clustering and Annotation: ID clusters of cells with similar transcriptional profiles and annotate them using established biomarkers
+
 ```{r setup, include = FALSE}
 # knitr::opts_chunk$set(fig.width=7, fig.height=5)
 knitr::opts_chunk$set(fig.asp = 0.618) # Golden ratio
@@ -22,9 +23,11 @@ knitr::opts_chunk$set(fig.asp = 0.618) # Golden ratio
 
 ```{r, message = FALSE, warning = FALSE}
 library(languageserver)
+library(tidyverse)
 library(dplyr)
 library(Seurat)
 library(patchwork)
+install.packages('BiocManager')
 ```
 
 # Data Setup
@@ -77,8 +80,53 @@ cardCells <- subset(cardCells, subset = nFeature_RNA > 200 & nFeature_RNA <5000 
 SCTransform completes all 3: Normalization, Scaling, and Finding Variable Features all in a single command and replaces these steps in the general workflow.
 In addition, SCTransform is also able to remove confounding sources of variation.
 
+NOTE: Install package "BiocManager"
+
 ```{r, warning = FALSE}
 cardCells <- SCTransform(cardCells, vars.to.regress = "percent.mt", verbose = FALSE)
+```
+
+## Principal Component Analysis (PCA)
+```{r, warning = FALSE}
+cardCells <- RunPCA(cardCells, features = VariableFeatures(object = cardCells))
+```
+
+Lets view which genes taht are expressed (positively and negatively) on the end of each PC axis
+
+```{r, warning = FALSE}
+print(cardCells[["pca"]], dims = 1:5, nfeatures = 5)
+```
+
+Then, lets look at the loading score, or which genes are contributing the most to the first 2 PC's
+```{r, warning = FALSE}
+VizDimLoadings(cardCells, dims = 1:2, reduction = "pca")
+```
+
+Now lets look at clusters of cells on the first 2 PC's
+
+```{r, warning = FALSE}
+DimPlot(cardCells, reduction = "pca") + NoLegend()
+```
+
+Use an ElbowPlot to determine the number of PC's needed for clustering
+```{r, warning = FALSE}
+ElbowPlot(cardCells)
+```
+
+10 PC's will be utilized
+
+Now cluster the cells over the 10 PC's
+```{r, warning = FALSE}
+cardCells <- FindNeighbors(cardCells, dims = 1:10)
+cardCells <- FindClusters(cardCells, resolution = 0.5)
+
+head(Idents(cardCells), 5)
+```
+
+# UMAP
+```{r, warning = FALSE}
+cardCells <- RunUMAP(cardCells, dims = 1:10)
+DimPlot(cardCells, reduction = "umap")
 ```
 
 ::: {#refs}
