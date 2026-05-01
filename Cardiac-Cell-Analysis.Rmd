@@ -126,7 +126,7 @@ head(Idents(cardCells), 5)
 # UMAP
 ```{r, warning = FALSE}
 cardCells <- RunUMAP(cardCells, dims = 1:10)
-DimPlot(cardCells, reduction = "umap")
+DimPlot(cardCells, reduction = "umap", , pt.size = 2.5)
 ```
 
 ::: {#refs}
