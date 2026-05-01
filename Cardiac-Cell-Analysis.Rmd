@@ -70,10 +70,30 @@ FeatureScatter(cardCells, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 2) **nCount_RNA vs nFeature_RNA**: More RNA molecules is positively correlated with more genes
     - Following Current Best Practices in single-cell RNA-seq analysis, 5000 features chosen
 
+Further QC questions:
+
+1) How many genes are being expressed per cell by quantile?
+
+2) How much mitochondrial stress is being expressed per cell by quantile?
+
+These questions will help determine how to QC viable cells
+```{r, warning = FALSE}
+# Check quantiles of features
+quantile(cardCells$nFeature_RNA, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+
+quantile(cardCells$percent.mt, probs = c(0.05, 0.25, 0.5, 0.75, 0.95))
+```
+See here that for this specific dataset, the mean percent.mt is about 8%.
+
+Given that cardiac cells generally have higher percent.mt due to features such as higher mitochondrial abundance, 
+in conjunction with the cells originating from a patient with ischemic cardiomyopathy, a higher percent.mt cutoff is chosen (15%)
+
 
 ```{r, warning = FALSE}
 # Subset data to only include cells that meet 5% mitochondrial threshold
-cardCells <- subset(cardCells, subset = nFeature_RNA > 200 & nFeature_RNA <5000 & percent.mt < 5)
+dim(cardCells)
+cardCells <- subset(cardCells, subset = nFeature_RNA > 50 & nFeature_RNA <3500 & percent.mt < 15)
+dim(cardCells)
 ```
 
 ## SCTransform
@@ -113,12 +133,12 @@ Use an ElbowPlot to determine the number of PC's needed for clustering
 ElbowPlot(cardCells)
 ```
 
-10 PC's will be utilized
+17 PC's will be utilized
 
-Now cluster the cells over the 10 PC's
+Now cluster the cells over the 17 PC's
 ```{r, warning = FALSE}
-cardCells <- FindNeighbors(cardCells, dims = 1:10)
-cardCells <- FindClusters(cardCells, resolution = 0.5)
+cardCells <- FindNeighbors(cardCells, dims = 1:17)
+cardCells <- FindClusters(cardCells, resolution = 0.5) 
 
 head(Idents(cardCells), 5)
 ```
@@ -129,9 +149,25 @@ cardCells <- RunUMAP(cardCells, dims = 1:10)
 DimPlot(cardCells, reduction = "umap", , pt.size = 2.5)
 ```
 
+See genes are being expressed by each cluster
+```{r, warning = FALSE}
+clusterMarkers <- FindAllMarkers(cardCells, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+
+clusterMarkers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
+```
+
+Cross-reference the top two genes expressed by each cluster with the Panglaodb
+
+```{r, warning = FALSE}
+
+```
+
 ::: {#refs}
 - Simonson B, Chaffin M, Hill MC, Atwa O, Guedira Y, Bhasin H, Hall AW, Hayat S, Baumgart S, Bedi KC Jr, Margulies KB, Klattenhoff CA, Ellinor PT. Single-nucleus RNA sequencing in ischemic cardiomyopathy reveals common transcriptional profile underlying end-stage heart failure. Cell Rep. 2023 Feb 28;42(2):112086. doi: 10.1016/j.celrep.2023.112086. Epub 2023 Feb 14. PMID: 36790929; PMCID: PMC10423750.
 
 Current Best Practices in single-cell RNA-seq analysis: a tutorial
 - Luecken MD, Theis FJ. Current best practices in single-cell RNA-seq analysis: a tutorial. Mol Syst Biol. 2019 Jun 19;15(6):e8746. doi: 10.15252/msb.20188746. PMID: 31217225; PMCID: PMC6582955.
+
+Single Cell RNA sequencing Database (cross reference genes)
+- https://panglaodb.se/
 :::
