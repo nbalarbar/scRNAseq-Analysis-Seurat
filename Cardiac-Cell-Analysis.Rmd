@@ -138,7 +138,7 @@ ElbowPlot(cardCells)
 Now cluster the cells over the 17 PC's
 ```{r, warning = FALSE}
 cardCells <- FindNeighbors(cardCells, dims = 1:17)
-cardCells <- FindClusters(cardCells, resolution = 0.5) 
+cardCells <- FindClusters(cardCells, resolution = 0.25) 
 
 head(Idents(cardCells), 5)
 ```
@@ -156,9 +156,13 @@ clusterMarkers <- FindAllMarkers(cardCells, only.pos = TRUE, min.pct = 0.25, log
 clusterMarkers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
 ```
 
-Cross-reference the top two genes expressed by each cluster with the Panglaodb
+Cross-reference the top two genes expressed by each cluster with the Panglaodb.
 
 ```{r, warning = FALSE}
+markers <- c("CXorf36", "STC1", "PCOLCE2", "MEG3", "CASQ2", "RERGL", "MS4A6A",
+             "S100A9", "CD3D", "CD8A", "TRDC", "TMIGD2", "SLC6A4", "SFRP5")
+
+DotPlot(cardCells, features = markers) + RotatedAxis()
 
 ```
 
